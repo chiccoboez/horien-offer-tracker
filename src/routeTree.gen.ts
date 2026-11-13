@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OfferteRouteImport } from './routes/offerte'
+import { Route as StatisticheRouteImport } from './routes/statistiche'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OfferteRoute = OfferteRouteImport.update({
+  id: '/offerte',
+  path: '/offerte',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatisticheRoute = StatisticheRouteImport.update({
+  id: '/statistiche',
+  path: '/statistiche',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/offerte': typeof OfferteRoute
+  '/statistiche': typeof StatisticheRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/offerte': typeof OfferteRoute
+  '/statistiche': typeof StatisticheRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/offerte': typeof OfferteRoute
+  '/statistiche': typeof StatisticheRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/offerte' | '/statistiche'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/offerte' | '/statistiche'
+  id: '__root__' | '/' | '/offerte' | '/statistiche'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  OfferteRoute: typeof OfferteRoute
+  StatisticheRoute: typeof StatisticheRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/offerte': {
+      id: '/offerte'
+      path: '/offerte'
+      fullPath: '/offerte'
+      preLoaderRoute: typeof OfferteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/statistiche': {
+      id: '/statistiche'
+      path: '/statistiche'
+      fullPath: '/statistiche'
+      preLoaderRoute: typeof StatisticheRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  OfferteRoute: OfferteRoute,
+  StatisticheRoute: StatisticheRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

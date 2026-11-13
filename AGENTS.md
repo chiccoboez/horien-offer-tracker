@@ -28,3 +28,6 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- Offers data flows through one react-query key ["offers"] plus a single realtime subscription in AppShell; every page derives metrics from it so all views refresh together.
+- No auth by design: the offers table and offer-pdfs private bucket allow anon access; PDFs are opened via short-lived signed URLs.
