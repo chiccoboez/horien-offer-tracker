@@ -22,11 +22,14 @@ export type Database = {
           customer_name: string
           end_customer_name: string
           id: string
+          is_alert_dismissed: boolean
           notes: string
           offer_date: string
           offer_name: string
+          offer_type: string
           pdf_url: string | null
           po_date: string | null
+          project_name: string
           region: string
           status: string
           total_amount: number
@@ -38,11 +41,14 @@ export type Database = {
           customer_name?: string
           end_customer_name?: string
           id?: string
+          is_alert_dismissed?: boolean
           notes?: string
           offer_date?: string
           offer_name: string
+          offer_type?: string
           pdf_url?: string | null
           po_date?: string | null
+          project_name?: string
           region?: string
           status?: string
           total_amount?: number
@@ -54,11 +60,14 @@ export type Database = {
           customer_name?: string
           end_customer_name?: string
           id?: string
+          is_alert_dismissed?: boolean
           notes?: string
           offer_date?: string
           offer_name?: string
+          offer_type?: string
           pdf_url?: string | null
           po_date?: string | null
+          project_name?: string
           region?: string
           status?: string
           total_amount?: number

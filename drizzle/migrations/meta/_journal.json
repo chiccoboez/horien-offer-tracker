@@ -8,6 +8,13 @@
       "when": 1794576204808,
       "tag": "0000_create_offers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794645785302,
+      "tag": "0001_extend_offer_projects_and_statuses",
+      "breakpoints": true
     }
   ]
 }

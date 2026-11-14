@@ -8,13 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BATTERY_MODELS, STATUSES, uploadPdf, type Offer, type OfferInput } from "@/lib/offers";
+import { BATTERY_MODELS, STATUSES, OFFER_TYPES, hasProjectName, uploadPdf, type Offer, type OfferInput } from "@/lib/offers";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const empty = (): OfferInput => ({
-  offer_name: "", offer_date: today(), po_date: null, customer_name: "", end_customer_name: "",
+  offer_name: "", project_name: "", offer_type: "budgetary", is_alert_dismissed: false, offer_date: today(), po_date: null, customer_name: "", end_customer_name: "",
   battery_models: [{ model: "24UP160", quantity: 1 }], total_amount: 0, notes: "",
-  country: "", region: "", status: "quoted", pdf_url: null,
+  country: "", region: "", status: "Offerta inviata", pdf_url: null,
 });
 
 export function OfferForm({ offer, onDone }: { offer?: Offer; onDone?: () => void }) {
@@ -27,12 +27,13 @@ export function OfferForm({ offer, onDone }: { offer?: Offer; onDone?: () => voi
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!v.offer_name.trim()) { toast.error("Inserisci il nome dell'offerta"); return; }
+    if (!hasProjectName(v.project_name)) { toast.error("Inserisci il nome del progetto"); return; }
     setSaving(true);
     try {
       const pdf_url = file ? await uploadPdf(file) : v.pdf_url;
       const payload = {
         ...v, pdf_url,
-        po_date: v.status === "PO received" ? v.po_date || null : null,
+        po_date: v.status === "Ordinato" ? v.po_date || null : null,
         battery_models: v.battery_models.filter((b) => b.model && b.quantity > 0),
         total_amount: Number(v.total_amount) || 0,
       };
@@ -59,6 +60,13 @@ export function OfferForm({ offer, onDone }: { offer?: Offer; onDone?: () => voi
     <form onSubmit={submit} className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {field("Nome offerta *", <Input value={v.offer_name} onChange={(e) => set("offer_name", e.target.value)} />)}
+        {field("Nome progetto *", <Input required value={v.project_name} onChange={(e) => set("project_name", e.target.value)} />)}
+        {field("Tipo offerta", (
+          <Select value={v.offer_type} onValueChange={(t) => set("offer_type", t as OfferInput["offer_type"])}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{OFFER_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+          </Select>
+        ))}
         {field("Data offerta", <Input type="date" required value={v.offer_date} onChange={(e) => set("offer_date", e.target.value)} />)}
         {field("Stato", (
           <Select value={v.status} onValueChange={(s) => set("status", s as OfferInput["status"])}>
@@ -66,11 +74,11 @@ export function OfferForm({ offer, onDone }: { offer?: Offer; onDone?: () => voi
             <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
           </Select>
         ))}
-        {v.status === "PO received" && field("Data ricezione PO", <Input type="date" value={v.po_date ?? ""} onChange={(e) => set("po_date", e.target.value || null)} />)}
+        {v.status === "Ordinato" && field("Data ricezione PO", <Input type="date" value={v.po_date ?? ""} onChange={(e) => set("po_date", e.target.value || null)} />)}
         {field("Cliente", <Input value={v.customer_name} onChange={(e) => set("customer_name", e.target.value)} />)}
         {field("Cliente finale", <Input value={v.end_customer_name} onChange={(e) => set("end_customer_name", e.target.value)} />)}
         {field("Paese", <Input value={v.country} onChange={(e) => set("country", e.target.value)} />)}
-        {field("Regione", <Input value={v.region} onChange={(e) => set("region", e.target.value)} />)}
+        {field("Città / Regione", <Input value={v.region} onChange={(e) => set("region", e.target.value)} />)}
         {field("Importo totale (€)", <Input type="number" min={0} step="0.01" value={v.total_amount} onChange={(e) => set("total_amount", Number(e.target.value))} />)}
       </div>
 

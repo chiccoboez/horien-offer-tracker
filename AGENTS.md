@@ -31,3 +31,6 @@ use the editor.
 
 - Offers data flows through one react-query key ["offers"] plus a single realtime subscription in AppShell; every page derives metrics from it so all views refresh together.
 - No auth by design: the offers table and offer-pdfs private bucket allow anon access; PDFs are opened via short-lived signed URLs.
+
+- Normalize legacy statuses and battery identifiers at the shared offers read boundary; old clients and stored model lines remain compatible without destructive rewrites.
+- Keep dashboard selection separate from period aggregation: dashboard uses current offer-date year and latest-created exact-name projects, while historical analytics includes every offer. Unnamed legacy records use their own IDs to avoid accidental collapsing.

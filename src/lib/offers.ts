@@ -3,16 +3,27 @@ import { queryOptions, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const BATTERY_MODELS = [
-  "24UP160", "24UP200", "48UP160", "48UP200", "110UP80",
+  "24UP160", "24UP200", "48TL160", "48TL200", "110UP80",
   "125UP80", "220UP40", "250UP40", "380UP40", "450UP40",
 ] as const;
-export const STATUSES = ["quoted", "LOI", "PO received"] as const;
+export const STATUSES = ["Offerta inviata", "LOI", "Ordinato", "perso"] as const;
+export const OFFER_TYPES = ["budgetary", "official RFQ"] as const;
+export const normalizeBatteryModel = (model: string) => model === "48UP160" ? "48TL160" : model === "48UP200" ? "48TL200" : model;
+export const normalizeStatus = (status: string): OfferStatus => {
+  if (status === "quoted") return "Offerta inviata";
+  if (status === "PO received") return "Ordinato";
+  if (status === "lost") return "perso";
+  return status as OfferStatus;
+};
 export type OfferStatus = (typeof STATUSES)[number];
 export type BatteryLine = { model: string; quantity: number };
 
 export type Offer = {
   id: string;
   offer_name: string;
+  project_name: string;
+  offer_type: (typeof OFFER_TYPES)[number];
+  is_alert_dismissed: boolean;
   created_at: string;
   offer_date: string;
   po_date: string | null;
@@ -36,7 +47,8 @@ export const offersQuery = queryOptions({
     return (data ?? []).map((o) => ({
       ...o,
       total_amount: Number(o.total_amount),
-      battery_models: (Array.isArray(o.battery_models) ? o.battery_models : []) as BatteryLine[],
+      status: normalizeStatus(o.status),
+      battery_models: ((Array.isArray(o.battery_models) ? o.battery_models : []) as BatteryLine[]).map((b) => ({ ...b, model: normalizeBatteryModel(b.model) })),
     })) as Offer[];
   },
 });
@@ -62,20 +74,37 @@ export const eur = (n: number) =>
 
 export const totalQty = (o: Offer) => o.battery_models.reduce((s, b) => s + (Number(b.quantity) || 0), 0);
 
-export function isFollowUpDue(o: Pick<Offer, "status" | "offer_date">, now = new Date()) {
-  if (o.status !== "quoted") return false;
+export function isFollowUpDue(o: Pick<Offer, "status" | "offer_date"> & Partial<Pick<Offer, "is_alert_dismissed">>, now = new Date()) {
+  if (o.status !== "Offerta inviata" || o.is_alert_dismissed) return false;
   const limit = new Date(now);
   limit.setMonth(limit.getMonth() - 1);
   return new Date(o.offer_date) < limit;
 }
 
-export function metrics(offers: Offer[]) {
-  const quoted = offers.filter((o) => o.status === "quoted").reduce((s, o) => s + o.total_amount, 0);
-  const won = offers.filter((o) => o.status !== "quoted").reduce((s, o) => s + o.total_amount, 0);
+export const isOrdered = (o: Pick<Offer, "status">) => o.status === "LOI" || o.status === "Ordinato";
+
+export const hasProjectName = (value: string) => value.trim().length > 0;
+
+export function dashboardOffers(offers: Offer[], now = new Date()) {
+  const projects = new Map<string, Offer>();
+  for (const o of offers) {
+    if (o.offer_date.slice(0, 4) !== String(now.getFullYear())) continue;
+    // Unnamed legacy records are independent until their actual project is supplied.
+    const key = o.project_name ? `project:${o.project_name}` : `offer:${o.id}`;
+    const previous = projects.get(key);
+    if (!previous || o.created_at > previous.created_at || (o.created_at === previous.created_at && o.id > previous.id)) projects.set(key, o);
+  }
+  return [...projects.values()];
+}
+
+export function metrics(offers: Offer[], now = new Date()) {
+  const rows = dashboardOffers(offers, now);
+  const quoted = rows.filter((o) => !isOrdered(o)).reduce((s, o) => s + o.total_amount, 0);
+  const won = rows.filter(isOrdered).reduce((s, o) => s + o.total_amount, 0);
   const byModel = BATTERY_MODELS.map((m) => ({
     model: m,
-    quantity: offers.reduce(
-      (s, o) => s + o.battery_models.filter((b) => b.model === m).reduce((a, b) => a + (Number(b.quantity) || 0), 0),
+    quantity: rows.reduce(
+      (s, o) => s + o.battery_models.filter((b) => normalizeBatteryModel(b.model) === m).reduce((a, b) => a + (Number(b.quantity) || 0), 0),
       0,
     ),
   }));
@@ -83,13 +112,18 @@ export function metrics(offers: Offer[]) {
 }
 
 export function groupByPeriod(offers: Offer[], mode: "month" | "year") {
-  const map = new Map<string, { key: string; count: number; batteries: number; amount: number }>();
+  const map = new Map<string, { key: string; count: number; quotedBatteries: number; orderedBatteries: number; quotedAmount: number; orderedAmount: number }>();
   for (const o of offers) {
     const key = mode === "year" ? o.offer_date.slice(0, 4) : o.offer_date.slice(0, 7);
-    const g = map.get(key) ?? { key, count: 0, batteries: 0, amount: 0 };
+    const g = map.get(key) ?? { key, count: 0, quotedBatteries: 0, orderedBatteries: 0, quotedAmount: 0, orderedAmount: 0 };
     g.count++;
-    g.batteries += totalQty(o);
-    g.amount += o.total_amount;
+    if (isOrdered(o)) {
+      g.orderedBatteries += totalQty(o);
+      g.orderedAmount += o.total_amount;
+    } else {
+      g.quotedBatteries += totalQty(o);
+      g.quotedAmount += o.total_amount;
+    }
     map.set(key, g);
   }
   return [...map.values()].sort((a, b) => a.key.localeCompare(b.key));
@@ -109,10 +143,10 @@ export async function openPdf(path: string) {
 }
 
 export function toCsv(offers: Offer[]) {
-  const head = ["offer_name", "offer_date", "po_date", "customer_name", "end_customer_name", "battery_models", "total_amount", "country", "region", "status", "notes"];
+  const head = ["offer_name", "project_name", "offer_type", "offer_date", "po_date", "customer_name", "end_customer_name", "battery_models", "total_amount", "country", "region", "status", "notes"];
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const rows = offers.map((o) =>
-    [o.offer_name, o.offer_date, o.po_date, o.customer_name, o.end_customer_name,
+    [o.offer_name, o.project_name, o.offer_type, o.offer_date, o.po_date, o.customer_name, o.end_customer_name,
       o.battery_models.map((b) => `${b.model} x${b.quantity}`).join("; "),
       o.total_amount, o.country, o.region, o.status, o.notes].map(esc).join(","),
   );

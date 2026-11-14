@@ -1,22 +1,86 @@
 import { describe, expect, it } from "vitest";
-import { isFollowUpDue, metrics, type Offer } from "./offers";
+import { BATTERY_MODELS, OFFER_TYPES, STATUSES, dashboardOffers, groupByPeriod, hasProjectName, isFollowUpDue, metrics, normalizeBatteryModel, normalizeStatus, totalQty, type Offer } from "./offers";
 
-const base = { battery_models: [], total_amount: 0 } as unknown as Offer;
+const now = new Date("2026-11-14T12:00:00Z");
+const offer = (changes: Partial<Offer> = {}): Offer => ({
+  id: "one", offer_name: "Offer", project_name: "Project", offer_type: "budgetary", is_alert_dismissed: false,
+  created_at: "2026-11-01T12:00:00Z", offer_date: "2026-11-01", po_date: null,
+  customer_name: "", end_customer_name: "", battery_models: [{ model: "24UP160", quantity: 3 }],
+  total_amount: 100, notes: "", country: "", region: "", status: "Offerta inviata", pdf_url: null, ...changes,
+});
 describe("offer rules", () => {
-  it("alerts quoted offers older than one month", () => {
-    const now = new Date("2026-11-13");
-    expect(isFollowUpDue({ status: "quoted", offer_date: "2026-10-01" }, now)).toBe(true);
-    expect(isFollowUpDue({ status: "quoted", offer_date: "2026-11-01" }, now)).toBe(false);
-    expect(isFollowUpDue({ status: "LOI", offer_date: "2026-01-01" }, now)).toBe(false);
+  it("requires a nonblank project name", () => {
+    expect(hasProjectName("")).toBe(false);
+    expect(hasProjectName("  ")).toBe(false);
+    expect(hasProjectName("Project")).toBe(true);
   });
-  it("sums LOI + PO received separately from quoted", () => {
-    const m = metrics([
-      { ...base, status: "quoted", total_amount: 100 },
-      { ...base, status: "LOI", total_amount: 50 },
-      { ...base, status: "PO received", total_amount: 25, battery_models: [{ model: "24UP160", quantity: 3 }] },
-    ]);
+  it("allows exactly the two requested offer types", () => {
+    expect([...OFFER_TYPES]).toEqual(["budgetary", "official RFQ"]);
+  });
+  it("migrates legacy statuses to the four requested values", () => {
+    expect([...STATUSES]).toEqual(["Offerta inviata", "LOI", "Ordinato", "perso"]);
+    expect(normalizeStatus("quoted")).toBe("Offerta inviata");
+    expect(normalizeStatus("PO received")).toBe("Ordinato");
+    expect(normalizeStatus("lost")).toBe("perso");
+    expect(normalizeStatus("LOI")).toBe("LOI");
+  });
+  it("replaces 48UP identifiers while preserving legacy battery quantities", () => {
+    expect([...BATTERY_MODELS]).toEqual(["24UP160", "24UP200", "48TL160", "48TL200", "110UP80", "125UP80", "220UP40", "250UP40", "380UP40", "450UP40"]);
+    expect(normalizeBatteryModel("48UP160")).toBe("48TL160");
+    expect(normalizeBatteryModel("48UP200")).toBe("48TL200");
+    expect(metrics([offer({ battery_models: [{ model: "48UP200", quantity: 7 }] })], now).byModel.find((m) => m.model === "48TL200")?.quantity).toBe(7);
+  });
+  it("alerts only sent offers older than one month", () => {
+    expect(isFollowUpDue(offer({ offer_date: "2026-10-01" }), now)).toBe(true);
+    expect(isFollowUpDue(offer(), now)).toBe(false);
+    for (const status of ["LOI", "Ordinato", "perso"] as const) expect(isFollowUpDue(offer({ status, offer_date: "2026-01-01" }), now)).toBe(false);
+  });
+  it("never shows dismissed alerts even after time advances", () => {
+    const dismissed = offer({ offer_date: "2026-01-01", is_alert_dismissed: true });
+    expect(isFollowUpDue(dismissed, now)).toBe(false);
+    expect(isFollowUpDue(dismissed, new Date("2027-11-14"))).toBe(false);
+  });
+  it("limits every dashboard metric to the current year", () => {
+    const m = metrics([offer(), offer({ id: "old", project_name: "Old", offer_date: "2025-12-31", total_amount: 999 }), offer({ id: "future", project_name: "Future", offer_date: "2027-01-01", status: "Ordinato", total_amount: 500 })], now);
     expect(m.quoted).toBe(100);
-    expect(m.won).toBe(75);
-    expect(m.byModel.find((b) => b.model === "24UP160")?.quantity).toBe(3);
+    expect(m.won).toBe(0);
+    expect(m.byModel[0]?.quantity).toBe(3);
+  });
+  it("uses only the most recently created offer per exact project name", () => {
+    const latest = offer({ id: "new", created_at: "2026-11-02T12:00:00Z", offer_date: "2026-10-01", total_amount: 250, battery_models: [{ model: "24UP160", quantity: 8 }], status: "LOI" });
+    const rows = [offer(), latest];
+    expect(dashboardOffers(rows, now)).toEqual([latest]);
+    expect(metrics(rows, now).quoted).toBe(0);
+    expect(metrics(rows, now).won).toBe(250);
+    expect(metrics(rows, now).byModel[0]?.quantity).toBe(8);
+  });
+  it("does not merge different case or unnamed legacy projects", () => {
+    const rows = [offer(), offer({ id: "two", project_name: "project" }), offer({ id: "three", project_name: "" }), offer({ id: "four", project_name: "" })];
+    expect(metrics(rows, now).quoted).toBe(400);
+  });
+  it("includes perso in sent totals subject to latest-project selection", () => {
+    const m = metrics([offer(), offer({ id: "lost", created_at: "2026-11-03T00:00:00Z", status: "perso", total_amount: 70 })], now);
+    expect(m.quoted).toBe(70);
+    expect(m.won).toBe(0);
+    expect(m.byModel[0]?.quantity).toBe(3);
+  });
+  it("moves amounts from sent to ordered immediately on status transition", () => {
+    const sent = offer();
+    expect(metrics([sent], now).quoted).toBe(100);
+    expect(metrics([sent], now).won).toBe(0);
+    const ordered = metrics([{ ...sent, status: "Ordinato" }], now);
+    expect(ordered.quoted).toBe(0);
+    expect(ordered.won).toBe(100);
+    expect(metrics([{ ...sent, status: "LOI" }], now).won).toBe(100);
+  });
+  it("sums all battery lines for an individual offer", () => {
+    expect(totalQty(offer({ battery_models: [{ model: "24UP160", quantity: 3 }, { model: "48TL200", quantity: 7 }] }))).toBe(10);
+  });
+  it("keeps all historical offers and splits monthly and annual amounts and batteries", () => {
+    const rows = [offer({ offer_date: "2025-01-01" }), offer({ id: "two", offer_date: "2025-01-02", status: "LOI", total_amount: 50 }), offer({ id: "three", offer_date: "2025-01-03", status: "Ordinato", total_amount: 25 }), offer({ id: "four", offer_date: "2025-01-04", status: "perso", total_amount: 10 }), offer()];
+    const expected = { count: 4, quotedBatteries: 6, orderedBatteries: 6, quotedAmount: 110, orderedAmount: 75 };
+    expect(groupByPeriod(rows, "month")[0]).toEqual({ key: "2025-01", ...expected });
+    expect(groupByPeriod(rows, "year")[0]).toEqual({ key: "2025", ...expected });
+    expect(groupByPeriod(rows, "year")[1]?.quotedAmount).toBe(100);
   });
 });

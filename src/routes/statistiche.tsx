@@ -10,6 +10,8 @@ import { eur, groupByPeriod, offersQuery } from "@/lib/offers";
 export const Route = createFileRoute("/statistiche")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Statistiche — HORIEN Offer Tracker" },
       { name: "description", content: "Andamento mensile e annuale di offerte, batterie e importi HORIEN." },
       { property: "og:title", content: "Statistiche — HORIEN Offer Tracker" },
@@ -43,11 +45,13 @@ function Stats() {
               <XAxis dataKey="label" fontSize={12} />
               <YAxis yAxisId="l" allowDecimals={false} fontSize={12} />
               <YAxis yAxisId="r" orientation="right" fontSize={12} tickFormatter={(v) => `€${Math.round(v / 1000)}k`} />
-              <Tooltip formatter={(v: number, n: string) => (n === "Importo" ? eur(v) : v)} />
+              <Tooltip formatter={(v: number, n: string) => (n.startsWith("Importo") ? eur(v) : v)} />
               <Legend />
               <Bar yAxisId="l" dataKey="count" name="Offerte" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
-              <Bar yAxisId="l" dataKey="batteries" name="Batterie" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
-              <Line yAxisId="r" dataKey="amount" name="Importo" stroke="var(--chart-4)" strokeWidth={2} />
+              <Bar yAxisId="l" dataKey="quotedBatteries" name="Batterie quotate" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="l" dataKey="orderedBatteries" name="Batterie ordinate" fill="var(--chart-3)" radius={[4, 4, 0, 0]} />
+              <Line yAxisId="r" dataKey="quotedAmount" name="Importo quotato" stroke="var(--chart-4)" strokeWidth={2} />
+              <Line yAxisId="r" dataKey="orderedAmount" name="Importo ordinato" stroke="var(--chart-5)" strokeWidth={2} />
             </ComposedChart>
           </ResponsiveContainer>
         </CardContent>
@@ -55,15 +59,17 @@ function Stats() {
       <Card>
         <CardContent className="p-0">
           <Table>
-            <TableHeader><TableRow><TableHead>Periodo</TableHead><TableHead className="text-right">N. offerte</TableHead><TableHead className="text-right">Batterie quotate</TableHead><TableHead className="text-right">Importo quotato</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Periodo</TableHead><TableHead className="text-right">N. offerte</TableHead><TableHead className="text-right">Batterie quotate</TableHead><TableHead className="text-right">Batterie ordinate</TableHead><TableHead className="text-right">Importo quotato</TableHead><TableHead className="text-right">Importo ordinato</TableHead></TableRow></TableHeader>
             <TableBody>
-              {rows.length === 0 && <TableRow><TableCell colSpan={4} className="py-10 text-center text-muted-foreground">Nessun dato disponibile.</TableCell></TableRow>}
+              {rows.length === 0 && <TableRow><TableCell colSpan={6} className="py-10 text-center text-muted-foreground">Nessun dato disponibile.</TableCell></TableRow>}
               {[...rows].reverse().map((r) => (
                 <TableRow key={r.key}>
                   <TableCell className="font-medium capitalize">{r.label}</TableCell>
                   <TableCell className="text-right">{r.count}</TableCell>
-                  <TableCell className="text-right">{r.batteries}</TableCell>
-                  <TableCell className="text-right font-semibold">{eur(r.amount)}</TableCell>
+                  <TableCell className="text-right">{r.quotedBatteries}</TableCell>
+                  <TableCell className="text-right">{r.orderedBatteries}</TableCell>
+                  <TableCell className="text-right font-semibold">{eur(r.quotedAmount)}</TableCell>
+                  <TableCell className="text-right font-semibold">{eur(r.orderedAmount)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
