@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { format, getISOWeek, startOfWeek, addWeeks, startOfMonth, addMonths, startOfYear, addYears } from "date-fns";
 import { queryOptions, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -85,10 +86,20 @@ export const isOrdered = (o: Pick<Offer, "status">) => o.status === "LOI" || o.s
 
 export const hasProjectName = (value: string) => value.trim().length > 0;
 
-export function dashboardOffers(offers: Offer[], now = new Date()) {
+export type DashboardTimeframe = "week" | "month" | "year";
+
+export function dashboardPeriod(timeframe: DashboardTimeframe, now = new Date()) {
+  const start = timeframe === "week" ? startOfWeek(now, { weekStartsOn: 1 }) : timeframe === "month" ? startOfMonth(now) : startOfYear(now);
+  const end = timeframe === "week" ? addWeeks(start, 1) : timeframe === "month" ? addMonths(start, 1) : addYears(start, 1);
+  const label = timeframe === "week" ? `Settimana ${getISOWeek(now)}` : timeframe === "month" ? now.toLocaleDateString("it-IT", { month: "long", year: "numeric" }) : String(now.getFullYear());
+  return { start: format(start, "yyyy-MM-dd"), end: format(end, "yyyy-MM-dd"), label };
+}
+
+export function dashboardOffers(offers: Offer[], now = new Date(), timeframe: DashboardTimeframe = "year") {
+  const period = dashboardPeriod(timeframe, now);
   const projects = new Map<string, Offer>();
   for (const o of offers) {
-    if (o.offer_date.slice(0, 4) !== String(now.getFullYear())) continue;
+    if (o.offer_date < period.start || o.offer_date >= period.end) continue;
     // Unnamed legacy records are independent until their actual project is supplied.
     const key = o.project_name ? `project:${o.project_name}` : `offer:${o.id}`;
     const previous = projects.get(key);
@@ -97,8 +108,8 @@ export function dashboardOffers(offers: Offer[], now = new Date()) {
   return [...projects.values()];
 }
 
-export function metrics(offers: Offer[], now = new Date()) {
-  const rows = dashboardOffers(offers, now);
+export function metrics(offers: Offer[], now = new Date(), timeframe: DashboardTimeframe = "year") {
+  const rows = dashboardOffers(offers, now, timeframe);
   const quoted = rows.filter((o) => !isOrdered(o)).reduce((s, o) => s + o.total_amount, 0);
   const won = rows.filter(isOrdered).reduce((s, o) => s + o.total_amount, 0);
   const byModel = BATTERY_MODELS.map((m) => ({
@@ -108,7 +119,7 @@ export function metrics(offers: Offer[], now = new Date()) {
       0,
     ),
   }));
-  return { quoted, won, byModel };
+  return { count: rows.length, quoted, won, byModel };
 }
 
 export function groupByPeriod(offers: Offer[], mode: "month" | "year") {

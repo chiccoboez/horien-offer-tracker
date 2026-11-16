@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BATTERY_MODELS, OFFER_TYPES, STATUSES, dashboardOffers, groupByPeriod, hasProjectName, isFollowUpDue, metrics, normalizeBatteryModel, normalizeStatus, totalQty, type Offer } from "./offers";
+import { BATTERY_MODELS, OFFER_TYPES, STATUSES, dashboardOffers, dashboardPeriod, groupByPeriod, hasProjectName, isFollowUpDue, metrics, normalizeBatteryModel, normalizeStatus, totalQty, type Offer } from "./offers";
 
 const now = new Date("2026-11-14T12:00:00Z");
 const offer = (changes: Partial<Offer> = {}): Offer => ({
@@ -9,6 +9,28 @@ const offer = (changes: Partial<Offer> = {}): Offer => ({
   total_amount: 100, notes: "", country: "", region: "", status: "Offerta inviata", pdf_url: null, ...changes,
 });
 describe("offer rules", () => {
+  it("filters current week from Monday through Sunday using offer_date", () => {
+    const date = new Date(2026, 10, 12, 12);
+    const rows = [offer({ id: "before", project_name: "Before", offer_date: "2026-11-08" }), offer({ offer_date: "2026-11-09" }), offer({ id: "sun", project_name: "Sunday", offer_date: "2026-11-15", status: "LOI", total_amount: 50 }), offer({ id: "after", project_name: "After", offer_date: "2026-11-16" })];
+    const result = metrics(rows, date, "week");
+    expect(result.count).toBe(2);
+    expect(result.quoted).toBe(100);
+    expect(result.won).toBe(50);
+    expect(result.byModel[0]?.quantity).toBe(6);
+    expect(dashboardPeriod("week", date).label).toBe("Settimana 46");
+  });
+  it("filters the current month before applying latest-project selection", () => {
+    const rows = [offer(), offer({ id: "latest", created_at: "2026-11-10", offer_date: "2026-11-30", status: "Ordinato", total_amount: 200 }), offer({ id: "oct", project_name: "October", offer_date: "2026-10-31" }), offer({ id: "dec", project_name: "December", offer_date: "2026-12-01" })];
+    const result = metrics(rows, now, "month");
+    expect(result.count).toBe(1);
+    expect(result.quoted).toBe(0);
+    expect(result.won).toBe(200);
+    expect(result.byModel[0]?.quantity).toBe(3);
+  });
+  it("includes both years in a current ISO week crossing New Year", () => {
+    const rows = [offer({ offer_date: "2025-12-29" }), offer({ id: "two", project_name: "Two", offer_date: "2026-01-04" }), offer({ id: "out", project_name: "Out", offer_date: "2026-01-05" })];
+    expect(metrics(rows, new Date(2026, 0, 1, 12), "week").count).toBe(2);
+  });
   it("requires a nonblank project name", () => {
     expect(hasProjectName("")).toBe(false);
     expect(hasProjectName("  ")).toBe(false);

@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { eur, groupByPeriod, offersQuery } from "@/lib/offers";
+import { offerDistribution, offersByGeography } from "@/lib/offer-distributions";
+import { OfferDistributionChart } from "@/components/OfferDistributionChart";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/statistiche")({
   head: () => ({
@@ -28,6 +31,9 @@ function Stats() {
   const { data: offers = [] } = useQuery(offersQuery);
   const [mode, setMode] = useState<"month" | "year">("month");
   const rows = groupByPeriod(offers, mode).map((r) => ({ ...r, label: label(r.key) }));
+  const countries = offerDistribution(offers, "country");
+  const customers = offerDistribution(offers, "customer_name");
+  const geography = offersByGeography(offers);
   return (
     <div className="mx-auto max-w-6xl space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -76,6 +82,23 @@ function Stats() {
           </Table>
         </CardContent>
       </Card>
+      <div className="grid gap-8 border-t pt-6 md:grid-cols-2">
+        <OfferDistributionChart title="Offerte per Paese — tutti gli anni" rows={countries} />
+        <OfferDistributionChart title="Offerte per cliente — tutti gli anni" rows={customers} />
+      </div>
+      <section className="space-y-3 border-t pt-6" aria-label="Offerte per Paese e regione">
+        <h2 className="text-base font-semibold">Offerte per Paese e Città / Regione — tutti gli anni</h2>
+        {geography.length === 0 ? <p className="text-sm text-muted-foreground">Nessun dato disponibile.</p> : <Accordion type="multiple">
+          {geography.map((group) => <AccordionItem key={group.country} value={group.country}>
+            <AccordionTrigger><span className="flex min-w-0 flex-1 items-center justify-between gap-3 pr-3"><span className="break-words">{group.country}</span><span className="shrink-0 tabular-nums text-muted-foreground">{group.count} offerte</span></span></AccordionTrigger>
+            <AccordionContent>
+              <Table><TableHeader><TableRow><TableHead>Città / Regione</TableHead><TableHead className="text-right">N. offerte</TableHead></TableRow></TableHeader><TableBody>
+                {group.regions.map((region) => <TableRow key={region.name}><TableCell className="whitespace-normal break-words">{region.name}</TableCell><TableCell className="text-right tabular-nums">{region.count}</TableCell></TableRow>)}
+              </TableBody></Table>
+            </AccordionContent>
+          </AccordionItem>)}
+        </Accordion>}
+      </section>
     </div>
   );
 }

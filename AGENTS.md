@@ -33,4 +33,5 @@ use the editor.
 - No auth by design: the offers table and offer-pdfs private bucket allow anon access; PDFs are opened via short-lived signed URLs.
 
 - Normalize legacy statuses and battery identifiers at the shared offers read boundary; old clients and stored model lines remain compatible without destructive rewrites.
-- Keep dashboard selection separate from period aggregation: dashboard uses current offer-date year and latest-created exact-name projects, while historical analytics includes every offer. Unnamed legacy records use their own IDs to avoid accidental collapsing.
+- Keep dashboard selection separate from historical aggregation: filter offer dates by the selected current ISO week, month or year before latest-created exact-name project selection; default to year. Unnamed legacy records use their own IDs to avoid accidental collapsing, and historical analytics includes every offer.
+- Compute country/customer distributions and country/region counts in pure shared helpers using exact stored strings and explicit missing-value groups; this keeps charts consistent without geographic normalization or new dependencies.

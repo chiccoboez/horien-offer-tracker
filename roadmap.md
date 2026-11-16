@@ -4,3 +4,9 @@
 - [x] Apply current-year, latest-project dashboard metrics and persistent reminder dismissal.
 - [x] Split historical analytics into sent/lost and LOI/ordered amounts and batteries.
 - [x] Test rules and verify saving, editing, dismissal and historical views.
+
+# Dashboard and analytics refresh
+- [x] Replace dashboard chart with four compact metrics and week/month/year tabs.
+- [x] Add historical country/customer pie charts and country/region breakdown.
+- [x] Test timeframe/grouping rules and verify desktop/mobile views with existing offers.
+- [x] Omit optional map to avoid new dependencies and geographic name interpretation.
