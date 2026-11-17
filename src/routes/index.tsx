@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OfferForm } from "@/components/OfferForm";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { dashboardPeriod, eur, isFollowUpDue, metrics, offersQuery, type DashboardTimeframe } from "@/lib/offers";
+import { dashboardPeriod, eur, isFollowUpDue, metricOffers, metrics, offersQuery, type DashboardTimeframe } from "@/lib/offers";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,7 +39,7 @@ function Dashboard() {
   const now = new Date();
   const period = dashboardPeriod(timeframe, now);
   const m = metrics(offers, now, timeframe);
-  const alerts = offers.filter((o) => isFollowUpDue(o));
+  const alerts = metricOffers(offers).filter((o) => isFollowUpDue(o));
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">

@@ -6,7 +6,7 @@ const offer = (changes: Partial<Offer> = {}): Offer => ({
   id: "one", offer_name: "Offer", project_name: "Project", offer_type: "budgetary", is_alert_dismissed: false,
   created_at: "2026-11-01T12:00:00Z", offer_date: "2026-11-01", po_date: null,
   customer_name: "", end_customer_name: "", battery_models: [{ model: "24UP160", quantity: 3 }],
-  total_amount: 100, notes: "", country: "", region: "", status: "Offerta inviata", pdf_url: null, ...changes,
+  total_amount: 100, notes: "", country: "", region: "", status: "Offerta inviata", pdf_url: null, exclude_from_metrics: false, validity_date: null, ...changes,
 });
 describe("offer rules", () => {
   it("filters current week from Monday through Sunday using offer_date", () => {
@@ -104,5 +104,15 @@ describe("offer rules", () => {
     expect(groupByPeriod(rows, "month")[0]).toEqual({ key: "2025-01", ...expected });
     expect(groupByPeriod(rows, "year")[0]).toEqual({ key: "2025", ...expected });
     expect(groupByPeriod(rows, "year")[1]?.quotedAmount).toBe(100);
+  });
+});
+
+describe("exclude_from_metrics", () => {
+  it("ignores excluded offers in dashboard metrics and history", () => {
+    const now = new Date("2026-11-17T12:00:00Z");
+    const rows = [offer({ offer_date: "2026-11-10" }), offer({ id: "x", project_name: "Excluded", offer_date: "2026-11-10", total_amount: 5000, exclude_from_metrics: true })];
+    expect(metrics(rows, now).count).toBe(1);
+    expect(metrics(rows, now).quoted).toBe(100);
+    expect(groupByPeriod(rows, "year")[0].count).toBe(1);
   });
 });

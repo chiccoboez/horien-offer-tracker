@@ -37,6 +37,8 @@ export type Offer = {
   region: string;
   status: OfferStatus;
   pdf_url: string | null;
+  exclude_from_metrics: boolean;
+  validity_date: string | null;
 };
 export type OfferInput = Omit<Offer, "id" | "created_at">;
 
@@ -84,6 +86,9 @@ export function isFollowUpDue(o: Pick<Offer, "status" | "offer_date"> & Partial<
 
 export const isOrdered = (o: Pick<Offer, "status">) => o.status === "LOI" || o.status === "Ordinato";
 
+/** Offers flagged as excluded are only shown in the offers table, never in calculations. */
+export const metricOffers = <T extends { exclude_from_metrics?: boolean }>(offers: T[]) => offers.filter((o) => !o.exclude_from_metrics);
+
 export const hasProjectName = (value: string) => value.trim().length > 0;
 
 export type DashboardTimeframe = "week" | "month" | "year";
@@ -98,7 +103,7 @@ export function dashboardPeriod(timeframe: DashboardTimeframe, now = new Date())
 export function dashboardOffers(offers: Offer[], now = new Date(), timeframe: DashboardTimeframe = "year") {
   const period = dashboardPeriod(timeframe, now);
   const projects = new Map<string, Offer>();
-  for (const o of offers) {
+  for (const o of metricOffers(offers)) {
     if (o.offer_date < period.start || o.offer_date >= period.end) continue;
     // Unnamed legacy records are independent until their actual project is supplied.
     const key = o.project_name ? `project:${o.project_name}` : `offer:${o.id}`;
@@ -124,7 +129,7 @@ export function metrics(offers: Offer[], now = new Date(), timeframe: DashboardT
 
 export function groupByPeriod(offers: Offer[], mode: "month" | "year") {
   const map = new Map<string, { key: string; count: number; quotedBatteries: number; orderedBatteries: number; quotedAmount: number; orderedAmount: number }>();
-  for (const o of offers) {
+  for (const o of metricOffers(offers)) {
     const key = mode === "year" ? o.offer_date.slice(0, 4) : o.offer_date.slice(0, 7);
     const g = map.get(key) ?? { key, count: 0, quotedBatteries: 0, orderedBatteries: 0, quotedAmount: 0, orderedAmount: 0 };
     g.count++;
@@ -154,12 +159,12 @@ export async function openPdf(path: string) {
 }
 
 export function toCsv(offers: Offer[]) {
-  const head = ["offer_name", "project_name", "offer_type", "offer_date", "po_date", "customer_name", "end_customer_name", "battery_models", "total_amount", "country", "region", "status", "notes"];
+  const head = ["offer_name", "project_name", "offer_type", "offer_date", "po_date", "customer_name", "end_customer_name", "battery_models", "total_amount", "country", "region", "status", "notes", "validity_date", "exclude_from_metrics"];
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const rows = offers.map((o) =>
     [o.offer_name, o.project_name, o.offer_type, o.offer_date, o.po_date, o.customer_name, o.end_customer_name,
       o.battery_models.map((b) => `${b.model} x${b.quantity}`).join("; "),
-      o.total_amount, o.country, o.region, o.status, o.notes].map(esc).join(","),
+      o.total_amount, o.country, o.region, o.status, o.notes, o.validity_date, o.exclude_from_metrics ? "si" : "no"].map(esc).join(","),
   );
   return [head.join(","), ...rows].join("\n");
 }

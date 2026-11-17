@@ -5,7 +5,7 @@ import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, T
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { eur, groupByPeriod, offersQuery } from "@/lib/offers";
+import { eur, groupByPeriod, metricOffers, offersQuery } from "@/lib/offers";
 import { offerDistribution, offersByGeography } from "@/lib/offer-distributions";
 import { OfferDistributionChart } from "@/components/OfferDistributionChart";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -28,7 +28,8 @@ const label = (key: string) =>
   key.length === 4 ? `Anno ${key}` : new Date(`${key}-01`).toLocaleDateString("it-IT", { month: "long", year: "numeric" });
 
 function Stats() {
-  const { data: offers = [] } = useQuery(offersQuery);
+  const { data: allOffers = [] } = useQuery(offersQuery);
+  const offers = metricOffers(allOffers);
   const [mode, setMode] = useState<"month" | "year">("month");
   const rows = groupByPeriod(offers, mode).map((r) => ({ ...r, label: label(r.key) }));
   const countries = offerDistribution(offers, "country");

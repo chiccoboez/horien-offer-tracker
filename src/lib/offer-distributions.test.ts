@@ -5,7 +5,7 @@ import type { Offer } from "./offers";
 const offer = (country: string, customer_name: string, region: string, offer_date = "2026-11-01"): Offer => ({
   id: "one", offer_name: "Offer", project_name: "Same project", offer_type: "budgetary", is_alert_dismissed: false,
   created_at: "2026-11-01", offer_date, po_date: null, customer_name, end_customer_name: "", battery_models: [],
-  total_amount: 100, notes: "", country, region, status: "Offerta inviata", pdf_url: null,
+  total_amount: 100, notes: "", country, region, status: "Offerta inviata", pdf_url: null, exclude_from_metrics: false, validity_date: null,
 });
 
 describe("historical offer distributions", () => {

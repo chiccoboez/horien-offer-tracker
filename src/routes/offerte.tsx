@@ -91,20 +91,19 @@ function OffersPage() {
       </div>
       <Card>
         <CardContent className="p-0">
-          <Table>
+          <Table className="text-xs [&_td]:px-2 [&_td]:py-1.5 [&_th]:h-9 [&_th]:px-2">
             <TableHeader>
               <TableRow>
-                <TableHead>Offerta</TableHead><TableHead>Progetto</TableHead><TableHead>Tipo offerta</TableHead><TableHead>Data</TableHead><TableHead>Cliente</TableHead>
-                <TableHead>Cliente finale</TableHead><TableHead>Modelli</TableHead><TableHead className="text-right">Totale Batterie</TableHead><TableHead>Paese</TableHead><TableHead>Città / Regione</TableHead>
+                <TableHead>Progetto</TableHead><TableHead>Tipo</TableHead><TableHead>Data</TableHead><TableHead>Cliente</TableHead>
+                <TableHead>Cliente finale</TableHead><TableHead>Modelli</TableHead><TableHead className="text-right">Tot. batt.</TableHead><TableHead>Paese</TableHead><TableHead>Regione</TableHead>
                 <TableHead className="text-right">Importo</TableHead><TableHead>Stato</TableHead><TableHead className="text-right">Azioni</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.length === 0 && <TableRow><TableCell colSpan={13} className="py-10 text-center text-muted-foreground">Nessuna offerta trovata.</TableCell></TableRow>}
+              {rows.length === 0 && <TableRow><TableCell colSpan={12} className="py-10 text-center text-muted-foreground">Nessuna offerta trovata.</TableCell></TableRow>}
               {rows.map((o) => (
                 <TableRow key={o.id}>
-                  <TableCell className="font-medium">{o.offer_name}</TableCell>
-                  <TableCell>{o.project_name || "—"}</TableCell>
+                                    <TableCell className="font-medium">{o.project_name || "—"}{o.exclude_from_metrics && <div className="text-xs font-normal text-muted-foreground">Escluso dai calcoli</div>}</TableCell>
                   <TableCell>{o.offer_type}</TableCell>
                   <TableCell className="whitespace-nowrap">{o.offer_date}{o.po_date && <div className="text-xs text-muted-foreground">PO: {o.po_date}</div>}</TableCell>
                   <TableCell>{o.customer_name}</TableCell>
@@ -115,9 +114,9 @@ function OffersPage() {
                   <TableCell className="whitespace-nowrap text-right font-semibold">{eur(o.total_amount)}</TableCell>
                   <TableCell><Badge variant={o.status === "perso" ? "destructive" : o.status === "Offerta inviata" ? "outline" : o.status === "LOI" ? "secondary" : "default"}>{o.status}</Badge></TableCell>
                   <TableCell className="whitespace-nowrap text-right">
-                    <Button variant="ghost" size="icon" aria-label="PDF" disabled={!o.pdf_url} onClick={() => o.pdf_url && openPdf(o.pdf_url).catch((e) => toast.error(e.message))}><FileText className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" aria-label="Modifica" onClick={() => setEditing(o)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" aria-label="Elimina" onClick={() => setDeleting(o)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="PDF" disabled={!o.pdf_url} onClick={() => o.pdf_url && openPdf(o.pdf_url).catch((e) => toast.error(e.message))}><FileText className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Modifica" onClick={() => setEditing(o)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Elimina" onClick={() => setDeleting(o)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </TableCell>
                 </TableRow>
               ))}

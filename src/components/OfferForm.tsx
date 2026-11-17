@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BATTERY_MODELS, STATUSES, OFFER_TYPES, hasProjectName, uploadPdf, type Offer, type OfferInput } from "@/lib/offers";
@@ -14,7 +15,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const empty = (): OfferInput => ({
   offer_name: "", project_name: "", offer_type: "budgetary", is_alert_dismissed: false, offer_date: today(), po_date: null, customer_name: "", end_customer_name: "",
   battery_models: [{ model: "24UP160", quantity: 1 }], total_amount: 0, notes: "",
-  country: "", region: "", status: "Offerta inviata", pdf_url: null,
+  country: "", region: "", status: "Offerta inviata", pdf_url: null, exclude_from_metrics: false, validity_date: null,
 });
 
 export function OfferForm({ offer, onDone }: { offer?: Offer; onDone?: () => void }) {
@@ -79,6 +80,7 @@ export function OfferForm({ offer, onDone }: { offer?: Offer; onDone?: () => voi
         {field("Cliente finale", <Input value={v.end_customer_name} onChange={(e) => set("end_customer_name", e.target.value)} />)}
         {field("Paese", <Input value={v.country} onChange={(e) => set("country", e.target.value)} />)}
         {field("Città / Regione", <Input value={v.region} onChange={(e) => set("region", e.target.value)} />)}
+        {field("Validità Offerta", <Input type="date" value={v.validity_date ?? ""} onChange={(e) => set("validity_date", e.target.value || null)} />)}
         {field("Importo totale (€)", <Input type="number" min={0} step="0.01" value={v.total_amount} onChange={(e) => set("total_amount", Number(e.target.value))} />)}
       </div>
 
@@ -100,6 +102,11 @@ export function OfferForm({ offer, onDone }: { offer?: Offer; onDone?: () => voi
         <Button type="button" variant="outline" size="sm" onClick={() => set("battery_models", [...v.battery_models, { model: "24UP160", quantity: 1 }])}>
           <Plus className="h-4 w-4" /> Aggiungi modello
         </Button>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Switch id="exclude_from_metrics" checked={v.exclude_from_metrics} onCheckedChange={(c) => set("exclude_from_metrics", c)} />
+        <Label htmlFor="exclude_from_metrics">Non includere nei calcoli</Label>
       </div>
 
       {field("Note", <Textarea rows={3} value={v.notes} onChange={(e) => set("notes", e.target.value)} />)}

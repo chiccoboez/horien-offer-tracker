@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           customer_name: string
           end_customer_name: string
+          exclude_from_metrics: boolean
           id: string
           is_alert_dismissed: boolean
           notes: string
@@ -33,6 +34,7 @@ export type Database = {
           region: string
           status: string
           total_amount: number
+          validity_date: string | null
         }
         Insert: {
           battery_models?: Json
@@ -40,6 +42,7 @@ export type Database = {
           created_at?: string
           customer_name?: string
           end_customer_name?: string
+          exclude_from_metrics?: boolean
           id?: string
           is_alert_dismissed?: boolean
           notes?: string
@@ -52,6 +55,7 @@ export type Database = {
           region?: string
           status?: string
           total_amount?: number
+          validity_date?: string | null
         }
         Update: {
           battery_models?: Json
@@ -59,6 +63,7 @@ export type Database = {
           created_at?: string
           customer_name?: string
           end_customer_name?: string
+          exclude_from_metrics?: boolean
           id?: string
           is_alert_dismissed?: boolean
           notes?: string
@@ -71,6 +76,7 @@ export type Database = {
           region?: string
           status?: string
           total_amount?: number
+          validity_date?: string | null
         }
         Relationships: []
       }
