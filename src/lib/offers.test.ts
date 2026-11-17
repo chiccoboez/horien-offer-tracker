@@ -113,6 +113,6 @@ describe("exclude_from_metrics", () => {
     const rows = [offer({ offer_date: "2026-11-10" }), offer({ id: "x", project_name: "Excluded", offer_date: "2026-11-10", total_amount: 5000, exclude_from_metrics: true })];
     expect(metrics(rows, now).count).toBe(1);
     expect(metrics(rows, now).quoted).toBe(100);
-    expect(groupByPeriod(rows, "year")[0].count).toBe(1);
+    expect(groupByPeriod(rows, "year")[0]?.count).toBe(1);
   });
 });
