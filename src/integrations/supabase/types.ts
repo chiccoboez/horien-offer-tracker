@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      customers: {
+        Row: {
+          address: string
+          company_name: string
+          contacts: Json
+          created_at: string
+          id: string
+        }
+        Insert: {
+          address?: string
+          company_name: string
+          contacts?: Json
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          address?: string
+          company_name?: string
+          contacts?: Json
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       offers: {
         Row: {
           battery_models: Json

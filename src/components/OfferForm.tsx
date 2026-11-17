@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CustomerPicker } from "@/components/CustomerPicker";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -76,7 +77,7 @@ export function OfferForm({ offer, onDone }: { offer?: Offer; onDone?: () => voi
           </Select>
         ))}
         {v.status === "Ordinato" && field("Data ricezione PO", <Input type="date" value={v.po_date ?? ""} onChange={(e) => set("po_date", e.target.value || null)} />)}
-        {field("Cliente", <Input value={v.customer_name} onChange={(e) => set("customer_name", e.target.value)} />)}
+        {field("Cliente", <CustomerPicker value={v.customer_name} onChange={(c) => set("customer_name", c)} />)}
         {field("Cliente finale", <Input value={v.end_customer_name} onChange={(e) => set("end_customer_name", e.target.value)} />)}
         {field("Paese", <Input value={v.country} onChange={(e) => set("country", e.target.value)} />)}
         {field("Città / Regione", <Input value={v.region} onChange={(e) => set("region", e.target.value)} />)}
