@@ -10,3 +10,9 @@
 - [x] Add historical country/customer pie charts and country/region breakdown.
 - [x] Test timeframe/grouping rules and verify desktop/mobile views with existing offers.
 - [x] Omit optional map to avoid new dependencies and geographic name interpretation.
+
+# Customer notes and projects
+- [ ] Update expired-offer alert wording.
+- [ ] Add customer notes with individual editing, deletion and attachments.
+- [ ] Add Progetti with search, status filters, CRUD and conditional winning company.
+- [ ] Verify storage reuse, persistence, existing pages and mobile layouts.

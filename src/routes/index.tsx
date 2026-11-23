@@ -70,7 +70,7 @@ function Dashboard() {
           {alerts.map(({ o, kind }) => (
             <div key={`${kind}-${o.id}`} className="flex items-center justify-between gap-3 rounded-md border-l-4 border-warning bg-muted px-4 py-2 text-sm">
               {kind === "expired"
-                ? <span className="min-w-0 break-words">Promemoria: offerta di <b>{o.customer_name}</b> scaduta.</span>
+                ? <span className="min-w-0 break-words">Promemoria: offerta <b>{o.offer_name}</b> di <b>{o.customer_name}</b> scaduta.</span>
                 : <span className="min-w-0 break-words">Promemoria: Contattare il cliente <b>{o.customer_name}</b> per l'offerta <b>{o.offer_name}</b></span>}
               <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label={`Nascondi promemoria ${o.offer_name}`} title="Nascondi promemoria" disabled={dismiss.isPending} onClick={() => dismiss.mutate(o.id)}><X className="h-4 w-4" /></Button>
             </div>

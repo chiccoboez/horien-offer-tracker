@@ -21,6 +21,7 @@ export type Database = {
           contacts: Json
           created_at: string
           id: string
+          notes_history: Json
         }
         Insert: {
           address?: string
@@ -28,6 +29,7 @@ export type Database = {
           contacts?: Json
           created_at?: string
           id?: string
+          notes_history?: Json
         }
         Update: {
           address?: string
@@ -35,6 +37,7 @@ export type Database = {
           contacts?: Json
           created_at?: string
           id?: string
+          notes_history?: Json
         }
         Relationships: []
       }
@@ -104,12 +107,63 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          country: string
+          created_at: string
+          end_customer_name: string
+          id: string
+          involved_companies: Json
+          notes: string
+          project_name: string
+          specifications_file_name: string | null
+          specifications_file_url: string | null
+          specifications_text: string
+          start_date: string
+          status: string
+          winning_company: string | null
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          end_customer_name?: string
+          id?: string
+          involved_companies?: Json
+          notes?: string
+          project_name: string
+          specifications_file_name?: string | null
+          specifications_file_url?: string | null
+          specifications_text?: string
+          start_date?: string
+          status?: string
+          winning_company?: string | null
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          end_customer_name?: string
+          id?: string
+          involved_companies?: Json
+          notes?: string
+          project_name?: string
+          specifications_file_name?: string | null
+          specifications_file_url?: string | null
+          specifications_text?: string
+          start_date?: string
+          status?: string
+          winning_company?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      save_customer_note: {
+        Args: { customer_id: string; note: Json; remove_note?: boolean }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

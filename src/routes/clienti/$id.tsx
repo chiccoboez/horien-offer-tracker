@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { customerOffers, customersQuery } from "@/lib/customers";
 import { eur, offersQuery } from "@/lib/offers";
+import { CustomerNotes } from "@/components/CustomerNotes";
 
 export const Route = createFileRoute("/clienti/$id")({
   head: () => ({
@@ -50,6 +51,7 @@ function CustomerDetail() {
           </Card>
         ))}
       </div>
+      <CustomerNotes customerId={c.id} notes={c.notes_history} />
       <Card>
         <CardHeader><CardTitle>Ordini ed Offerte</CardTitle></CardHeader>
         <CardContent>
