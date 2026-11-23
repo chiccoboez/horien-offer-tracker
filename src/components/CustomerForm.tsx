@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createCustomer, emptyContact, type CustomerInput } from "@/lib/customers";
+import { createCustomer, updateCustomer, emptyContact, type Customer, type CustomerInput } from "@/lib/customers";
 
-export function CustomerForm({ initialName = "", onDone }: { initialName?: string; onDone?: (companyName: string) => void }) {
+export function CustomerForm({ initialName = "", customer, onDone }: { initialName?: string; customer?: Customer; onDone?: (companyName: string) => void }) {
   const qc = useQueryClient();
-  const [v, setV] = useState<CustomerInput>({ company_name: initialName, address: "", contacts: [emptyContact()] });
+  const [v, setV] = useState<CustomerInput>(customer
+    ? { company_name: customer.company_name, address: customer.address, contacts: customer.contacts.length ? customer.contacts.map((c) => ({ ...emptyContact(), ...c })) : [emptyContact()] }
+    : { company_name: initialName, address: "", contacts: [emptyContact()] });
   const [saving, setSaving] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -19,7 +21,7 @@ export function CustomerForm({ initialName = "", onDone }: { initialName?: strin
     if (!v.company_name.trim()) { toast.error("Inserisci il nome dell'azienda"); return; }
     setSaving(true);
     try {
-      const c = await createCustomer(v);
+      const c = customer ? await updateCustomer(customer.id, v) : await createCustomer(v);
       await qc.invalidateQueries({ queryKey: ["customers"] });
       toast.success("Cliente salvato");
       onDone?.(c.company_name);

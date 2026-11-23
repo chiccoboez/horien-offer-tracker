@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OfferForm } from "@/components/OfferForm";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { dashboardPeriod, eur, isFollowUpDue, metricOffers, metrics, offersQuery, type DashboardTimeframe } from "@/lib/offers";
+import { dashboardPeriod, eur, isExpired, isFollowUpDue, metricOffers, metrics, offersQuery, type DashboardTimeframe } from "@/lib/offers";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,7 +39,10 @@ function Dashboard() {
   const now = new Date();
   const period = dashboardPeriod(timeframe, now);
   const m = metrics(offers, now, timeframe);
-  const alerts = metricOffers(offers).filter((o) => isFollowUpDue(o));
+  const alerts = metricOffers(offers).flatMap((o) => [
+    ...(isExpired(o, now) ? [{ o, kind: "expired" as const }] : []),
+    ...(isFollowUpDue(o, now) ? [{ o, kind: "follow" as const }] : []),
+  ]);
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -64,9 +67,11 @@ function Dashboard() {
         <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Bell className="h-4 w-4 text-warning" /> Promemoria follow-up ({alerts.length})</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           {alerts.length === 0 && <p className="text-sm text-muted-foreground">Nessun promemoria: tutte le offerte sono aggiornate.</p>}
-          {alerts.map((o) => (
-            <div key={o.id} className="flex items-center justify-between gap-3 rounded-md border-l-4 border-warning bg-muted px-4 py-2 text-sm">
-              <span className="min-w-0 break-words">Promemoria: Contattare il cliente <b>{o.customer_name}</b> per l'offerta <b>{o.offer_name}</b></span>
+          {alerts.map(({ o, kind }) => (
+            <div key={`${kind}-${o.id}`} className="flex items-center justify-between gap-3 rounded-md border-l-4 border-warning bg-muted px-4 py-2 text-sm">
+              {kind === "expired"
+                ? <span className="min-w-0 break-words">Promemoria: offerta di <b>{o.customer_name}</b> scaduta.</span>
+                : <span className="min-w-0 break-words">Promemoria: Contattare il cliente <b>{o.customer_name}</b> per l'offerta <b>{o.offer_name}</b></span>}
               <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label={`Nascondi promemoria ${o.offer_name}`} title="Nascondi promemoria" disabled={dismiss.isPending} onClick={() => dismiss.mutate(o.id)}><X className="h-4 w-4" /></Button>
             </div>
           ))}

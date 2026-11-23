@@ -84,6 +84,12 @@ export function isFollowUpDue(o: Pick<Offer, "status" | "offer_date"> & Partial<
   return new Date(o.offer_date) < limit;
 }
 
+/** Validity date before today while still "Offerta inviata". */
+export function isExpired(o: Pick<Offer, "status" | "validity_date"> & Partial<Pick<Offer, "is_alert_dismissed">>, now = new Date()) {
+  if (o.status !== "Offerta inviata" || o.is_alert_dismissed || !o.validity_date) return false;
+  return o.validity_date < format(now, "yyyy-MM-dd");
+}
+
 export const isOrdered = (o: Pick<Offer, "status">) => o.status === "LOI" || o.status === "Ordinato";
 
 /** Offers flagged as excluded are only shown in the offers table, never in calculations. */

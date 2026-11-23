@@ -34,6 +34,20 @@ export async function createCustomer(input: CustomerInput) {
   return data;
 }
 
+export async function updateCustomer(id: string, input: CustomerInput) {
+  const { data, error } = await supabase.from("customers")
+    .update({ ...input, company_name: input.company_name.trim(), contacts: cleanContacts(input.contacts) })
+    .eq("id", id).select().single();
+  if (error) throw error.code === "23505" ? new Error("Esiste già un cliente con questo nome") : error;
+  return data;
+}
+
+/** Deletes only the customer record; offers keep their customer_name text. */
+export async function deleteCustomer(id: string) {
+  const { error } = await supabase.from("customers").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export function useCustomersRealtime() {
   const qc = useQueryClient();
   useEffect(() => {

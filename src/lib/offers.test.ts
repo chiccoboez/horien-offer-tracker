@@ -116,3 +116,16 @@ describe("exclude_from_metrics", () => {
     expect(groupByPeriod(rows, "year")[0]?.count).toBe(1);
   });
 });
+
+import { isExpired } from "./offers";
+describe("expired offer alert", () => {
+  const now = new Date("2026-11-23T10:00:00");
+  it("flags Offerta inviata with validity before today", () => {
+    expect(isExpired({ status: "Offerta inviata", validity_date: "2026-11-22" }, now)).toBe(true);
+  });
+  it("ignores today, other statuses and dismissed alerts", () => {
+    expect(isExpired({ status: "Offerta inviata", validity_date: "2026-11-23" }, now)).toBe(false);
+    expect(isExpired({ status: "Ordinato", validity_date: "2026-01-01" }, now)).toBe(false);
+    expect(isExpired({ status: "Offerta inviata", validity_date: "2026-01-01", is_alert_dismissed: true }, now)).toBe(false);
+  });
+});
