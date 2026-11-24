@@ -12,7 +12,7 @@
 - [x] Omit optional map to avoid new dependencies and geographic name interpretation.
 
 # Customer notes and projects
-- [ ] Update expired-offer alert wording.
-- [ ] Add customer notes with individual editing, deletion and attachments.
-- [ ] Add Progetti with search, status filters, CRUD and conditional winning company.
-- [ ] Verify storage reuse, persistence, existing pages and mobile layouts.
+- [x] Update expired-offer alert wording.
+- [x] Add customer notes with individual editing, deletion and attachments.
+- [x] Add Progetti with search, status filters, CRUD and conditional winning company.
+- [x] Verify storage reuse, persistence, existing pages and mobile layouts.

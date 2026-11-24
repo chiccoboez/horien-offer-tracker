@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BarChart3, Building2, LayoutDashboard, ListChecks } from "lucide-react";
+import { BarChart3, Building2, FolderKanban, LayoutDashboard, ListChecks } from "lucide-react";
 import type { ReactNode } from "react";
 import logo from "@/assets/horien-logo.svg";
 import { useOffersRealtime } from "@/lib/offers";
@@ -10,6 +10,7 @@ const nav = [
   { to: "/offerte", label: "Gestione Offerte", icon: ListChecks },
   { to: "/statistiche", label: "Statistiche", icon: BarChart3 },
   { to: "/clienti", label: "Clienti", icon: Building2 },
+  { to: "/progetti", label: "Progetti", icon: FolderKanban },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {

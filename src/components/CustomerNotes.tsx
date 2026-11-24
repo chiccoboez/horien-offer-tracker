@@ -82,7 +82,7 @@ function NoteForm({ customerId, initial, onDone }: { customerId: string; initial
     <div className="space-y-1.5"><Label htmlFor="note-date">Data *</Label><Input id="note-date" type="date" required value={v.note_date} onChange={(e) => setV({ ...v, note_date: e.target.value })} /></div>
     <div className="space-y-1.5"><Label htmlFor="note-title">Titolo *</Label><Input id="note-title" required value={v.title} onChange={(e) => setV({ ...v, title: e.target.value })} /></div>
     <div className="space-y-1.5"><Label htmlFor="note-body">Testo</Label><Textarea id="note-body" rows={5} value={v.body} onChange={(e) => setV({ ...v, body: e.target.value })} /></div>
-    <AttachmentInput id="note-attachment" file={file} existingName={v.attachment_name} onFile={setFile} onRemove={() => { setFile(null); const { attachment_url: _url, attachment_name: _name, ...rest } = v; setV(rest); }} />
+    <AttachmentInput id="note-attachment" file={file} existingName={v.attachment_name ?? null} onFile={setFile} onRemove={() => { setFile(null); const { attachment_url: _url, attachment_name: _name, ...rest } = v; setV(rest); }} />
     <Button type="submit" disabled={saving}>{saving ? "Salvataggio…" : "Salva nota"}</Button>
   </form>;
 }
